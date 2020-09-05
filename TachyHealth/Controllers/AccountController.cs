@@ -25,7 +25,7 @@ namespace TachyHealth.Controllers
             _Context = new ApplicationDbContext();
         }
 
-        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
+        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager)
         {
             UserManager = userManager;
             SignInManager = signInManager;
@@ -38,9 +38,9 @@ namespace TachyHealth.Controllers
             {
                 return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
             }
-            private set 
-            { 
-                _signInManager = value; 
+            private set
+            {
+                _signInManager = value;
             }
         }
 
@@ -84,7 +84,7 @@ namespace TachyHealth.Controllers
             ApplicationUser signedUser = await UserManager.FindByEmailAsync(model.Email);
             SignInStatus result;
 
-            if(signedUser != null)
+            if (signedUser != null)
             {
                 result = await SignInManager.PasswordSignInAsync(signedUser.UserName, model.Password, model.RememberMe, shouldLockout: false);
             }
@@ -137,7 +137,7 @@ namespace TachyHealth.Controllers
             // If a user enters incorrect codes for a specified amount of time then the user account 
             // will be locked out for a specified amount of time. 
             // You can configure the account lockout settings in IdentityConfig
-            var result = await SignInManager.TwoFactorSignInAsync(model.Provider, model.Code, isPersistent:  model.RememberMe, rememberBrowser: model.RememberBrowser);
+            var result = await SignInManager.TwoFactorSignInAsync(model.Provider, model.Code, isPersistent: model.RememberMe, rememberBrowser: model.RememberBrowser);
             switch (result)
             {
                 case SignInStatus.Success:
@@ -178,7 +178,7 @@ namespace TachyHealth.Controllers
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
+                    await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
 
                     // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
                     // Send an email with this link
@@ -427,7 +427,7 @@ namespace TachyHealth.Controllers
         }
 
 
-        public new  ActionResult Profile()
+        public new ActionResult Profile()
         {
             ViewBag.Message = "Your profile page.";
             RegisterViewModel model = new RegisterViewModel();
@@ -440,13 +440,13 @@ namespace TachyHealth.Controllers
             if (model.IsAdmin)
             {
                 UsersViewModel UV = new UsersViewModel();
-                UV.Users=UserManager.Users.ToList();
-                return View("AdminProfile",UV);
+                UV.Users = UserManager.Users.ToList();
+                return View("AdminProfile", UV);
             }
             else
             {
 
-                return View("Profile",model);
+                return View("Profile", model);
             }
         }
 
@@ -454,12 +454,37 @@ namespace TachyHealth.Controllers
 
         [HttpPost]
         [Route("/Account/Save/")]
-        
+
         public ActionResult Save(RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
                 var user = (ApplicationUser)UserManager.FindByEmail(model.Email);
+                if (user.IsAdmin)
+                {
+                    user.UserName = model.FullName.ToString();
+                    user.PhoneNumber = model.MobileNumber.ToString();
+                    user.PasswordHash = model.Password.ToString();
+                    UserManager.Update(user);
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    return View("ConfirmEdit",model);
+                }
+            }
+            return RedirectToAction("Profile", "Account");
+        }
+
+
+        [Authorize]
+        [HttpPost]
+        //[Route("Account/ConfirmEdit/")]
+        public ActionResult ConfirmEdit(RegisterViewModel model)
+        {
+            var user = UserManager.FindById(User.Identity.GetUserId());
+            if (user.PasswordHash.Equals(model.Password.GetHashCode()))
+            {
                 user.UserName = model.FullName.ToString();
                 user.PhoneNumber = model.MobileNumber.ToString();
                 user.PasswordHash = model.Password;
@@ -468,7 +493,6 @@ namespace TachyHealth.Controllers
             }
             return RedirectToAction("Profile", "Account");
         }
-
 
         [Route("/Account/Edit/{Id}")]
 

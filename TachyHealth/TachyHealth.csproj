@@ -504,6 +504,7 @@
     <Content Include="Views\Account\Profile.cshtml" />
     <Content Include="Views\Account\AdminProfile.cshtml" />
     <Content Include="Views\Account\Edit.cshtml" />
+    <Content Include="Views\Account\ConfirmEdit.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
