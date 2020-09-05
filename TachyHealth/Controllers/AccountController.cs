@@ -17,15 +17,18 @@ namespace TachyHealth.Controllers
     {
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
+        public ApplicationDbContext _Context;
 
         public AccountController()
         {
+            _Context = new ApplicationDbContext();
         }
 
         public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
         {
             UserManager = userManager;
             SignInManager = signInManager;
+            _Context = new ApplicationDbContext();
         }
 
         public ApplicationSignInManager SignInManager
@@ -75,7 +78,12 @@ namespace TachyHealth.Controllers
 
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, change to shouldLockout: true
-            var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
+            //var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
+            //var user = await UserManager.FindByNameAsync(model.Email);
+            ApplicationUser signedUser = UserManager.FindByEmail(model.Email);
+            var result = await SignInManager.PasswordSignInAsync(signedUser.UserName, model.Password, model.RememberMe, shouldLockout: false);
+
+
             switch (result)
             {
                 case SignInStatus.Success:
@@ -408,6 +416,39 @@ namespace TachyHealth.Controllers
         {
             return View();
         }
+
+
+        public new  ActionResult Profile()
+        {
+            ViewBag.Message = "Your profile page.";
+            RegisterViewModel model = new RegisterViewModel();
+            var signedUser = UserManager.FindById(User.Identity.GetUserId());
+            model.FullName = signedUser.UserName;
+            model.MobileNumber = signedUser.PhoneNumber;
+            model.Email = signedUser.Email;
+            model.Password = signedUser.PasswordHash;
+            return View(model);
+        }
+
+
+
+        //[HttpPost]
+        //[Route("Account/Save/")]
+        
+        public ActionResult Save(RegisterViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                ApplicationUser signedUser = UserManager.FindByEmail(model.Email);
+                signedUser.UserName = model.FullName;
+                signedUser.PhoneNumber = model.MobileNumber;
+                signedUser.PasswordHash = model.Password;
+                return RedirectToAction("Index", "Home");
+            }
+            return RedirectToAction("Profile", "Account");
+        }
+
+
 
         protected override void Dispose(bool disposing)
         {

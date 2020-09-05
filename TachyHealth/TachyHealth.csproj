@@ -197,6 +197,10 @@
     <Compile Include="Migrations\202009050235083_001.Designer.cs">
       <DependentUpon>202009050235083_001.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202009050418380_002.cs" />
+    <Compile Include="Migrations\202009050418380_002.Designer.cs">
+      <DependentUpon>202009050418380_002.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\IdentityModels.cs" />
@@ -260,9 +264,11 @@
     <Content Include="Views\Manage\VerifyPhoneNumber.cshtml" />
     <Content Include="Views\Shared\Lockout.cshtml" />
     <Content Include="Views\Shared\_LoginPartial.cshtml" />
+    <Content Include="Views\Account\Profile.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\Users\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff2" />
@@ -280,6 +286,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Migrations\202009050235083_001.resx">
       <DependentUpon>202009050235083_001.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202009050418380_002.resx">
+      <DependentUpon>202009050418380_002.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
