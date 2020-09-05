@@ -9,6 +9,7 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using TachyHealth.Models;
+using TachyHealth.ViewModel;
 
 namespace TachyHealth.Controllers
 {
@@ -80,9 +81,17 @@ namespace TachyHealth.Controllers
             // To enable password failures to trigger account lockout, change to shouldLockout: true
             //var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
             //var user = await UserManager.FindByNameAsync(model.Email);
-            ApplicationUser signedUser = UserManager.FindByEmail(model.Email);
-            var result = await SignInManager.PasswordSignInAsync(signedUser.UserName, model.Password, model.RememberMe, shouldLockout: false);
+            ApplicationUser signedUser = await UserManager.FindByEmailAsync(model.Email);
+            SignInStatus result;
 
+            if(signedUser != null)
+            {
+                result = await SignInManager.PasswordSignInAsync(signedUser.UserName, model.Password, model.RememberMe, shouldLockout: false);
+            }
+            else
+            {
+                result = SignInStatus.Failure;
+            }
 
             switch (result)
             {
@@ -427,27 +436,66 @@ namespace TachyHealth.Controllers
             model.MobileNumber = signedUser.PhoneNumber;
             model.Email = signedUser.Email;
             model.Password = signedUser.PasswordHash;
-            return View(model);
+            model.IsAdmin = signedUser.IsAdmin;
+            if (model.IsAdmin)
+            {
+                UsersViewModel UV = new UsersViewModel();
+                UV.Users=UserManager.Users.ToList();
+                return View("AdminProfile",UV);
+            }
+            else
+            {
+
+                return View("Profile",model);
+            }
         }
 
 
 
-        //[HttpPost]
-        //[Route("Account/Save/")]
+        [HttpPost]
+        [Route("/Account/Save/")]
         
         public ActionResult Save(RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
-                ApplicationUser signedUser = UserManager.FindByEmail(model.Email);
-                signedUser.UserName = model.FullName;
-                signedUser.PhoneNumber = model.MobileNumber;
-                signedUser.PasswordHash = model.Password;
+                var user = (ApplicationUser)UserManager.FindByEmail(model.Email);
+                user.UserName = model.FullName.ToString();
+                user.PhoneNumber = model.MobileNumber.ToString();
+                user.PasswordHash = model.Password;
+                UserManager.Update(user);
                 return RedirectToAction("Index", "Home");
             }
             return RedirectToAction("Profile", "Account");
         }
 
+
+        [Route("/Account/Edit/{Id}")]
+
+        public ActionResult Edit(RegisterViewModel model,string Id)
+        {
+            ViewBag.Message = model.FullName+" profile page.";
+            var User = UserManager.FindById(Id);
+            model.FullName = User.UserName;
+            model.MobileNumber = User.PhoneNumber;
+            model.Email = User.Email;
+            model.Password = User.PasswordHash;
+            model.IsAdmin = User.IsAdmin;
+            return View("Edit",model);
+        }
+
+
+        private string Base64Encode(string plainText)
+        {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return System.Convert.ToBase64String(plainTextBytes);
+        }
+
+        public string Base64Decode(string base64EncodedData)
+        {
+            var base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+            return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
+        }
 
 
         protected override void Dispose(bool disposing)
